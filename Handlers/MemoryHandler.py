@@ -42,11 +42,17 @@ class MemoryReader:
         return base_addr
 
     def read_address(self, address):
-        address_2_read = self.base_address + address
         try:
-            if self.read_process(self.process, ctypes.c_void_p(address_2_read), ctypes.byref(self.read_buffer),
+            if self.read_process(self.process, ctypes.c_void_p(address), ctypes.byref(self.read_buffer),
                                  ctypes.sizeof(self.read_buffer),
                                  ctypes.byref(self.byte_read)):
                 return self.read_buffer.value
         except Exception as e:
             print("Error: ", e)
+
+    def read_pointer(self, base_offset, offsets):
+        p = self.base_address + base_offset
+        for offset in offsets:
+            p = self.read_address(p) + offset
+        return self.read_address(p)
+
