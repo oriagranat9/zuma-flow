@@ -1,8 +1,7 @@
 from Handlers import ScreenHandler, MemoryHandler
-main_process_name = "chrome"
-screen = ScreenHandler.ScreenCapture(main_process_name, show_image=True)
-memory_reader = MemoryHandler.MemoryReader(main_process_name)
 
-# memory_reader.read_address()
+# screen = ScreenHandler.ScreenCapture("", show_image=True)
+memory_reader = MemoryHandler.MemoryReader("Zuma")
+
+print(memory_reader.read_address(0x0b842d10))
 # screen.get_image()
-
