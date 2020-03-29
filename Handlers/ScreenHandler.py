@@ -11,14 +11,12 @@ class ScreenCapture:
         self.all_windows = []
         win32gui.EnumWindows(self._enum_cb, None)
         self.selected_program = [(hwnd, title) for hwnd, title in
-                                 self.all_windows if program_name in title.lower()][0][0]
+                                 self.all_windows if program_name in title][0][0]
 
     def _enum_cb(self, hwnd, result):
         self.all_windows.append((hwnd, win32gui.GetWindowText(hwnd)))
 
     def get_image(self):
-        if win32gui.IsWindowVisible(self.selected_program) is not True:
-            win32gui.SetForegroundWindow(self.selected_program)
         bbox = win32gui.GetWindowRect(self.selected_program)
         tmp_img = ImageGrab.grab(bbox)
         image = cv2.cvtColor(numpy.array(tmp_img), self.selected_color)
