@@ -1,4 +1,5 @@
 import numpy
+import psutil
 from PIL import ImageGrab
 import win32gui
 import cv2
@@ -9,15 +10,14 @@ class ScreenCapture:
         self.selected_color = selected_color
         self.show_image = show_image
         self.all_windows = []
-        win32gui.EnumWindows(self._enum_cb, None)
-        self.selected_program = [(hwnd, title) for hwnd, title in
-                                 self.all_windows if program_name in title][0][0]
+        for proc in psutil.process_iter():
+            if program_name in proc.name():
+                self.pid = int(proc.pid)
+                break
 
-    def _enum_cb(self, hwnd, result):
-        self.all_windows.append((hwnd, win32gui.GetWindowText(hwnd)))
 
     def get_image(self):
-        bbox = win32gui.GetWindowRect(self.selected_program)
+        bbox = win32gui.GetWindowRect(self.pid)
         tmp_img = ImageGrab.grab(bbox)
         image = cv2.cvtColor(numpy.array(tmp_img), self.selected_color)
         if self.show_image:

@@ -1,0 +1,7 @@
+psutil
+pywin32
+numpy
+pillow
+opencv-python
+tensorflow
+
