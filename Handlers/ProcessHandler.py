@@ -1,28 +1,30 @@
-# knows how to start/end the game from windows
 import psutil
-import os
+import os, signal
+import subprocess
 from win32 import win32gui, win32process
 
-
+# knows how to start/end the game from windows
 class ProcessHandler:
     def __init__(self, executable_path):
+        if not os.path.isfile(executable_path):
+            raise 
         self.executable_path = executable_path
-        os.path.isfile(executable_path)  # self.process_name = os.path.basename(self.executable_path)
-        self.process_name = executable_path
+        
+        self.process_name = os.path.basename(self.executable_path)
         self.process_dir = os.path.dirname(self.executable_path)
         self._hwnd = None
         self._pid = None
 
     def is_running(self):
-        pass
+        return self.pid() is not None
 
     def run(self):
-        # check if is already running
-        os.chdir('c:\\documents and settings\\flow_model')
-        os.system('"C:\\Documents and Settings\\flow_model\\flow.exe"')
+        if self.is_running() is not True:
+            subprocess.call(self.executable_path)
 
     def terminate(self):
-        pass
+        if self.is_running():
+            os.kill(self._pid, signal.SIGSTOP) 
 
     def hwnd(self):
         def callback(hwnd, hwnds):
@@ -33,9 +35,12 @@ class ProcessHandler:
 
         hwnds = []
         win32gui.EnumWindows(callback, hwnds)
-        return hwnds[0]
+        if len(hwnds) > 0:
+            return hwnds[0]
+        return None
 
     def pid(self):
+        self._pid = None        
         for proc in psutil.process_iter():
             try:
                 if self.process_name in proc.name():

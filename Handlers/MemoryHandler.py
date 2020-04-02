@@ -6,25 +6,12 @@ import win32process
 
 
 class MemoryReader:
-    def __init__(self, process_name):
+    def __init__(self, pid):
         self.PROCESS_QUERY_INFORMATION = 0x0400
         self.PROCESS_VM_READ = 0x0010
-        self.pid = self._get_client_pid(f"{process_name}.exe")
+        self.pid = pid
         self.process, self.read_process, self.read_buffer, self.byte_read = self._get_process()
         self.base_address = self._get_base_address()
-
-    @staticmethod
-    def _get_client_pid(process_name):
-        pid = None
-        for proc in psutil.process_iter():
-            try:
-                if proc.name() == process_name:
-                    pid = int(proc.pid)
-                    print("Found, PID = ", pid)
-                    break
-            except psutil.AccessDenied:
-                continue
-        return pid
 
     def _get_process(self):
         process = windll.kernel32.OpenProcess(self.PROCESS_QUERY_INFORMATION | self.PROCESS_VM_READ, False, self.pid)
@@ -37,6 +24,7 @@ class MemoryReader:
         process_all_access = 0x1F0FFF
         process_handle = win32api.OpenProcess(process_all_access, False, self.pid)
         modules = win32process.EnumProcessModules(process_handle)
+
         process_handle.close()
         base_addr = modules[0]
         return base_addr
@@ -55,4 +43,3 @@ class MemoryReader:
         for offset in offsets:
             p = self.read_address(p) + offset
         return self.read_address(p)
-
