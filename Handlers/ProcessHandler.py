@@ -7,11 +7,8 @@ from win32 import win32gui, win32process
 class ProcessHandler:
     def __init__(self, executable_path):
         if not os.path.isfile(executable_path):
-            raise 
+            raise Exception(f"{executable_path} is not a valid path.")
         self.executable_path = executable_path
-        
-        self.process_name = os.path.basename(self.executable_path)
-        self.process_dir = os.path.dirname(self.executable_path)
         self._hwnd = None
         self._pid = None
 
@@ -20,6 +17,7 @@ class ProcessHandler:
 
     def run(self):
         if self.is_running() is not True:
+            # TODO call open process async 
             subprocess.call(self.executable_path)
 
     def terminate(self):
