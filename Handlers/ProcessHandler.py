@@ -9,6 +9,8 @@ class ProcessHandler:
         if not os.path.isfile(executable_path):
             raise Exception(f"{executable_path} is not a valid path.")
         self.executable_path = executable_path
+        self.work_dir = os.path.dirname(self.executable_path)
+        self.process_name = os.path.basename(self.executable_path)
         self._hwnd = None
         self._pid = None
 
@@ -17,12 +19,11 @@ class ProcessHandler:
 
     def run(self):
         if self.is_running() is not True:
-            # TODO call open process async 
-            subprocess.call(self.executable_path)
+            subprocess.Popen(self.executable_path, cwd=self.work_dir)
 
     def terminate(self):
         if self.is_running():
-            os.kill(self._pid, signal.SIGSTOP) 
+            os.kill(self._pid, signal.SIGTERM) 
 
     def hwnd(self):
         def callback(hwnd, hwnds):

@@ -1,5 +1,6 @@
-import subprocess
+from ZumaEnvirnment import ZumaEnvironment
 
-subprocess.call("cmd.exe")
+z = ZumaEnvironment("f:\\Users\\oriag\\Desktop\\Zuma Deluxe\\Zuma.exe")
+z.reset()
 
 print("yes")

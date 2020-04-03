@@ -1,10 +1,14 @@
 import pyautogui
+import keyboard
 
 def set_mouse_position(point):
-    pyautogui.moveTo(point[0], point[1])
+    if not keyboard.is_pressed('p'):
+        pyautogui.moveTo(point[0], point[1])
  
 def right_click():
-    pyautogui.rightClick()
+    if not keyboard.is_pressed('p'):
+        pyautogui.rightClick()
 
 def left_click():
-    pyautogui.leftClick()
+    if not keyboard.is_pressed('p'):
+        pyautogui.leftClick()

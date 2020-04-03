@@ -13,10 +13,11 @@ class ScreenCapture:
 
     def get_image(self):
         bbox = win32gui.GetWindowRect(self.hwnd)
-        print(bbox)
         tmp_img = ImageGrab.grab(bbox)
+
+        n = numpy.asarray(tmp_img)
         image = cv2.cvtColor(numpy.array(tmp_img), self.selected_color)
-    
+
         if self.show_image:
             cv2.imshow("captured image", image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -29,4 +30,4 @@ class ScreenCapture:
 
     def get_resolution(self):
         bbox = win32gui.GetWindowRect(self.hwnd)
-        return numpy.array(bbox[2:3])
+        return numpy.array(bbox[2:4])
