@@ -5,6 +5,8 @@ from tf_agents.trajectories import time_step as ts
 from Handlers import MemoryHandler, MouseHandler, ScreenHandler, ProcessHandler
 import time
 import cv2
+import keyboard
+import sys
 
 
 class ZumaEnvironment(py_environment.PyEnvironment):
@@ -50,11 +52,9 @@ class ZumaEnvironment(py_environment.PyEnvironment):
         self.screen_handler = ScreenHandler.ScreenCapture(hwnd)
 
     def _reset(self):
+        if keyboard.is_pressed('p'):
+            sys.exit()
         self._restart_game()
-
-        # ---------------------
-        # TODO: start level
-        # ---------------------
         self._start_game()
         # set training timestamps
         self.start_time = time.time()
@@ -64,21 +64,26 @@ class ZumaEnvironment(py_environment.PyEnvironment):
         return ts.restart(self._observe())
 
     def _step(self, action):
-        # if reached max playtime: ignore action and return last timestep
-        if time.time() - self.start_time > self.max_playtime:
-            return ts.termination(self._observe(), self._get_reward())
-
-        # if not progressing or game is not running: ignore action and restart
-        if time.time() - self.last_progress_time > self.score_timeout or not self.process_handler.is_running():
-            return self.reset()
+        if keyboard.is_pressed('p'):
+            sys.exit()
+        
+        # if reached max playtime or game is minimized or game is not running: ignore action and return last timestep
+        if time.time() - self.start_time > self.max_playtime or not self.process_handler.is_running() or self.screen_handler.is_minimized():
+            return ts.termination(self._observe(), 0)
 
         self._action(action)
-
+        
         reward = self._get_reward()
+        if reward is None:
+            return ts.termination(self._observe(), 0)
 
         # update training timestamps
         if reward > 0:
             self.last_progress_time = time.time()
+        
+        # if not progressing: stop session
+        if time.time() - self.last_progress_time > self.score_timeout:
+            return ts.termination(self._observe(), reward)
 
         return ts.transition(self._observe(), reward)
 
@@ -106,10 +111,9 @@ class ZumaEnvironment(py_environment.PyEnvironment):
             MouseHandler.right_click()
         if action[2]:
             percentages = np.array(action[0:2])
-            print(f"y,x: {percentages}")
-            point = self.game_resolution * percentages 
+            point = self.game_resolution * percentages
             point = point.astype(int)
-            absolute_point = self.screen_handler.get_zero_position() + point #TODO: bug: out of bounds
+            absolute_point = self.screen_handler.get_zero_position() + point
             MouseHandler.set_mouse_position(absolute_point)
             MouseHandler.left_click()
 
@@ -120,9 +124,13 @@ class ZumaEnvironment(py_environment.PyEnvironment):
         return image
 
     def _get_reward(self):
-        current_score = self.memory_handler.read_pointer(0x001A531C, [0x300, 0x58, 0x30, 0xC4, 0xE8, 0x10, 0xE8])
+        try:
+            current_score = self.memory_handler.read_pointer(0x001A531C, [0x300, 0x58, 0x30, 0xC4, 0xE8, 0x10, 0xE8])
+        except TypeError:
+            return None
         reward = current_score - self.last_score
         self.last_score = current_score
+        print(f"Reward: {reward}") #Debug
         return reward
 
     def _start_game(self):

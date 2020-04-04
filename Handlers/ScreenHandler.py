@@ -30,4 +30,7 @@ class ScreenCapture:
 
     def get_resolution(self):
         bbox = win32gui.GetWindowRect(self.hwnd)
-        return numpy.array(bbox[2:4])
+        return numpy.array(bbox[2:4]) - numpy.array(bbox[0:2])
+
+    def is_minimized(self):
+        return win32gui.IsIconic(self.hwnd)

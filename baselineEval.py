@@ -24,7 +24,7 @@ train_env = tf_py_environment.TFPyEnvironment(env)
 random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(),
                                                 train_env.action_spec())
 
-#TODO: check why reset is not counted
+
 def compute_avg_return(environment, policy, num_episodes=1):
 
   total_return = 0.0
@@ -42,4 +42,4 @@ def compute_avg_return(environment, policy, num_episodes=1):
   avg_return = total_return / num_episodes
   return avg_return.numpy()[0]
 
-print(compute_avg_return(train_env, random_policy, 1))
+print(compute_avg_return(train_env, random_policy, 10))
