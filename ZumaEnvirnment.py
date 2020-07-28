@@ -27,11 +27,15 @@ class ZumaEnvironment(py_environment.PyEnvironment):
     def _set_specs(self):
         image_shape = np.append(np.flip(self.vison_resolution), 3)
         image_ones = np.ones(shape=image_shape)
-        max_action = int(str(self.vison_resolution.[0]) + str(self.vison_resolution.[1]) + "11") # concat action shape into 1D shape
+        self.max_action = int(
+            str(self.game_resolution[0]) + str(self.game_resolution[1]) + "11")  # concat action shape into 1D shape
+        # 111222**
+        # 059888**
         self._observation_spec = array_spec.BoundedArraySpec(shape=image_shape, dtype=np.int32,
-                                                             name='observation', minimum=image_ones * 0, maximum=image_ones * 255)
-        self._action_spec = array_spec.BoundedArraySpec(shape=(1,), dtype=np.float64, name='action',
-                                                        minimum=np.zeros(1), maximum=[max_action])
+                                                             name='observation', minimum=image_ones * 0,
+                                                             maximum=image_ones * 255)
+        self._action_spec = array_spec.BoundedArraySpec(shape=(1,), dtype=np.int32, name='action',
+                                                        minimum=np.zeros(1), maximum=[self.max_action])
 
     def action_spec(self):
         return self._action_spec
@@ -67,13 +71,13 @@ class ZumaEnvironment(py_environment.PyEnvironment):
     def _step(self, action):
         if keyboard.is_pressed('p'):
             sys.exit()
-        
+
         # if reached max playtime or game is minimized or game is not running: ignore action and return last timestep
         if time.time() - self.start_time > self.max_playtime or not self.process_handler.is_running() or self.screen_handler.is_minimized():
             return ts.termination(self._observe(), 0)
 
         self._action(action)
-        
+
         reward = self._get_reward()
         if reward is None:
             return ts.termination(self._observe(), 0)
@@ -81,26 +85,25 @@ class ZumaEnvironment(py_environment.PyEnvironment):
         # update training timestamps
         if reward > 0:
             self.last_progress_time = time.time()
-        
+
         # if not progressing: stop session
         if time.time() - self.last_progress_time > self.score_timeout:
             return ts.termination(self._observe(), reward)
 
         return ts.transition(self._observe(), reward)
 
-
-    def _split_action(action):
-        string_action = str(action[0])
+    def _split_action(self, action):
+        string_action = str(int(action[0])).zfill(len(str(self.max_action)))
         # len_x, len_y, len_rc, len_lc
         lens = [len(str(self.vison_resolution[0])), len(str(self.vison_resolution[1])), 1, 1]
-        
+
         accumulate_len = 0
         values = []
         for l in lens:
             value_str = string_action[accumulate_len: accumulate_len + l]
             values.append(int(value_str))
-            accumulate_len += l        
-        
+            accumulate_len += l
+
         return values
 
     def _action(self, action):
@@ -124,14 +127,18 @@ class ZumaEnvironment(py_environment.PyEnvironment):
                 left click
         '''
         action = self._split_action(action)
-        
+
         if action[3]:
             MouseHandler.right_click()
         if action[2]:
-            percentages = np.array(action[0:2])
-            point = self.game_resolution * percentages
-            point = point.astype(int)
-            absolute_point = self.screen_handler.get_zero_position() + point
+            # x_pos,y_pos = action[0], action[1]
+            action[0] = min(action[0], self.game_resolution[0])
+            action[1] = min(action[1], self.game_resolution[1])
+            relative_point = np.array(action[0:2])
+            # percentages = np.array(action[0:2])
+            # point = self.game_resolution * percentages
+            # point = point.astype(int)
+            absolute_point = self.screen_handler.get_zero_position() + relative_point
             MouseHandler.set_mouse_position(absolute_point)
             MouseHandler.left_click()
 
@@ -148,7 +155,7 @@ class ZumaEnvironment(py_environment.PyEnvironment):
             return None
         reward = current_score - self.last_score
         self.last_score = current_score
-        print(f"Reward: {reward}") #Debug
+        print(f"Reward: {reward}")  # Debug
         return reward
 
     def _start_game(self):
