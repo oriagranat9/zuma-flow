@@ -5,3 +5,5 @@ pillow
 opencv-python
 tensorflow
 keyboard
+matplotlib
+tf_agents

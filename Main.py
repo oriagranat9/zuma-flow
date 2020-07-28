@@ -30,14 +30,14 @@ log_interval = 1  # @param {type:"integer"}
 num_eval_episodes = 10  # @param {type:"integer"}
 eval_interval = 1  # @param {type:"integer"}
 
-env = ZumaEnvironment("f:\\Users\\oriag\\Desktop\\Zuma Deluxe\\Zuma.exe")
+env = ZumaEnvironment("D:\\Games\\Zuma Deluxe\\Zuma.exe")
 train_env = tf_py_environment.TFPyEnvironment(env)
 
 q_net = q_network.QNetwork(
     train_env.observation_spec(),
     train_env.action_spec())#TODO: bug: network not supporting multiple actions
 
-optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=1)
+optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate)
 
 train_step_counter = tf.Variable(0)
 

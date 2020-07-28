@@ -27,10 +27,11 @@ class ZumaEnvironment(py_environment.PyEnvironment):
     def _set_specs(self):
         image_shape = np.append(np.flip(self.vison_resolution), 3)
         image_ones = np.ones(shape=image_shape)
+        max_action = int(str(self.vison_resolution.[0]) + str(self.vison_resolution.[1]) + "11") # concat action shape into 1D shape
         self._observation_spec = array_spec.BoundedArraySpec(shape=image_shape, dtype=np.int32,
                                                              name='observation', minimum=image_ones * 0, maximum=image_ones * 255)
-        self._action_spec = array_spec.BoundedArraySpec(shape=(4,), dtype=np.float64, name='action',
-                                                        minimum=np.zeros(4), maximum=np.ones(4))
+        self._action_spec = array_spec.BoundedArraySpec(shape=(1,), dtype=np.float64, name='action',
+                                                        minimum=np.zeros(1), maximum=[max_action])
 
     def action_spec(self):
         return self._action_spec
@@ -87,6 +88,21 @@ class ZumaEnvironment(py_environment.PyEnvironment):
 
         return ts.transition(self._observe(), reward)
 
+
+    def _split_action(action):
+        string_action = str(action[0])
+        # len_x, len_y, len_rc, len_lc
+        lens = [len(str(self.vison_resolution[0])), len(str(self.vison_resolution[1])), 1, 1]
+        
+        accumulate_len = 0
+        values = []
+        for l in lens:
+            value_str = string_action[accumulate_len: accumulate_len + l]
+            values.append(int(value_str))
+            accumulate_len += l        
+        
+        return values
+
     def _action(self, action):
         ''' Action specs:   
             Action is a numpy array with 4 elements: [x, y, lc, rc]
@@ -107,6 +123,8 @@ class ZumaEnvironment(py_environment.PyEnvironment):
                 set mouse position
                 left click
         '''
+        action = self._split_action(action)
+        
         if action[3]:
             MouseHandler.right_click()
         if action[2]:
